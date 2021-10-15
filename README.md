@@ -1,1 +1,1 @@
-# openlca-scripts
+# openLCA scripts
