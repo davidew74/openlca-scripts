@@ -70,7 +70,7 @@ import org.openlca.core.results.SystemProcess as SystemProcess
 import org.openlca.core.results.UpstreamNode as UpstreamNode
 import org.openlca.core.results.SimulationResult as SimulationResult
 
-#import standard Python libraries
+#import standard Python libraries to be used
 import re
 import csv
 import imp
