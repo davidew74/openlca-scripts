@@ -27,3 +27,6 @@ To execute the script, click on the `Run` button in the toolbar of the Python ed
 Here is a minimum working example script that will show the information window:
 
 ![hello world example script execution](/images/olca_hello_world.png)
+
+# The openLCA API
+Jython allows you to directly access the openLCA Java API. you CAN interact with a Java class in the same way as with a Python class. The openLCA API starts with a set of classes that describe the basic data model, like `Flow`, `Process`, and `ProductSystem`. Such classes are in the ![olca-module repository](https://github.com/GreenDelta/olca-modules/tree/master/olca-core/src/main/java/org/openlca/core/model) by GreenDelta.
