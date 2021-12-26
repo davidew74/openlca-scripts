@@ -140,7 +140,6 @@ class FlowType_CLASS(object):
   def getFlowTypeName(self, flowTypeObj):
     return  {v: k for k, v in self.FlowType_DICT.items()}[flowTypeObj]
 
-
 class Flow_dict_CLASS(object):
   Name_KEY = "name"
   FlowProperty_KEY = "FlowProperty"
@@ -221,7 +220,7 @@ class ParameterRedef_CLASS(object):
 class Flow_TEMPLATE_CLASS(object):
   def __init__(self, name, flowtype, referenceFlowProperty, refId, description = "", category = ""):
     self.name = name
-    self.flowtype = flowtype #FlowType_CLASS.FlowType_DICT[flowtype]
+    self.flowtype = flowtype
     self.referenceFlowProperty = referenceFlowProperty
     self.refId = refId
     self.description = description
@@ -313,17 +312,22 @@ def count_iterable(iterable):
   # a single standalone underscore is sometimes used as a name to indicate that a variable is temporary or insignificant.
   """
   return sum(1 for _ in iterable)
+"""
 
+"""
 def get_class_iterable(db, clazz):
   return Daos.base(db, clazz).getAll()
-
+"""
+"""
 def count_class_iterable(db, clazz):
   return count_iterable(get_class_iterable(db, clazz))
-
+"""
+"""
 def get_nth_iterable(iterable, index):
   # https://stackoverflow.com/questions/2300756/get-the-nth-item-of-a-generator-in-python
   return next((x for i,x in enumerate(iterable) if i == index), None)
-
+"""
+"""
 def toBool(val):
   """
   converts string boolean value into a boolean value
@@ -334,7 +338,8 @@ def toBool(val):
     # https://stackoverflow.com/questions/715417/converting-from-a-string-to-boolean-in-python/18472142
     # The JSON parser is also useful for in general converting strings to reasonable python types.
     return val if isinstance(val.lower(), bool) else json.loads(val.lower())
-
+"""
+"""
 def add_parameter_redef(pname, pvalue, redef_attribute_DICT):
   pmRedef = ParameterRedef()
   pmRedef.name = pname
@@ -342,11 +347,13 @@ def add_parameter_redef(pname, pvalue, redef_attribute_DICT):
   pmRedef.contextId = redef_attribute_DICT[ParameterRedef_CLASS.contextId] #process.id or None
   pmRedef.contextType = redef_attribute_DICT[ParameterRedef_CLASS.contextType] #ModelType.PROCESS or None
   return pmRedef
-
+"""
+"""
 def getInputGlobalParameterList(db):
   pmList = get_class_iterable(db, model.Parameter)
-  return [_ for _ in pmList if _.scope is ParameterScope.GLOBAL] #and _.isInputParameter is True
-
+  return [_ for _ in pmList if _.scope is ParameterScope.GLOBAL]
+"""
+"""
 def evalute_parameter_formula(strFormula):
   interpreter = FormulaInterpreter()
   # lopp through all GLOBAL paramters
@@ -356,7 +363,8 @@ def evalute_parameter_formula(strFormula):
   # evaluate paramter formula
   pvale = interpreter.eval(strFormula)
   return pvale
-
+"""
+"""
 def add_parameter(pname, scope, param_attribute_DICT):
   param = Parameter()
   param.scope = scope
@@ -377,7 +385,8 @@ def add_parameter(pname, scope, param_attribute_DICT):
   else:
     param.value = param_attribute_DICT[Process_CLASS.Parameter_CLASS.value]
   return param
-
+"""
+"""
 def update_process_parameters(processObj):
   log_text("START Process DEPENDENT parameters")
   get_all_parameters = lambda x : x.parameters
@@ -398,7 +407,8 @@ def update_process_parameters(processObj):
   log_text("Update all Process DEPENDENT parameters")
   for pmObj in get_all_dependent_parameters(processObj):
     pmObj.value = interpreter.eval(pmObj.formula)
-
+"""
+"""
 def update_process_parameters_test(processObj):
   log_text("START Process DEPENDENT parameters")
   get_all_parameters = lambda x : x.parameters
@@ -424,7 +434,8 @@ def update_process_parameters_test(processObj):
   for pmObj in get_all_dependent_parameters(processObj):
     #pmObj.value = interpreter.eval(pmObj.formula)
     log_text("Dependent param [{0}] amount: '{1}'".format(pmObj.name, interpreter.eval(pmObj.formula)))
-
+"""
+"""
 def get_parameters_list(processObj, verbose = False):
   # initialize paramter dictionary
   param_DICT = {}
@@ -463,7 +474,8 @@ def get_parameters_list(processObj, verbose = False):
     if verbose:
       log_text("Dependent param [{0}] amount: '{1}'".format(pmObj.name, param_DICT[pmObj.name]))
   return param_DICT
-
+"""
+"""
 def add_exchange(flow_ref, flow_attribute_DICT):
   proc_exchange = model.Exchange()
   proc_exchange.isInput = toBool(flow_attribute_DICT[Process_CLASS.Flow_CLASS.isInput])
@@ -473,17 +485,21 @@ def add_exchange(flow_ref, flow_attribute_DICT):
   proc_exchange.amountFormula = flow_attribute_DICT[Process_CLASS.Flow_CLASS.amountFormula]
   proc_exchange.flowPropertyFactor = flow_ref.getReferenceFactor()
   return proc_exchange
-
+"""
+"""
 def insert(db, value):
     Daos.base(db, value.getClass()).insert(value)
-
+"""
+"""
 def update(db, value):
     return Daos.base(db, value.getClass()).update(value)
-
+"""
+"""
 def delete_all(db, clazz):
     dao = Daos.base(db, clazz)
     dao.deleteAll()
-
+"""
+"""
 def find(db, clazz, name):
     """ Find something by name"""
     dao = Daos.base(db, clazz)
@@ -491,7 +507,8 @@ def find(db, clazz, name):
         if item.name == name:
             return item
     return None
-
+"""
+"""
 def find_byRefId(db, clazz, RefId):
     """ Find something by RefId"""
     dao = Daos.base(db, clazz)
@@ -499,12 +516,14 @@ def find_byRefId(db, clazz, RefId):
         if item.refId == RefId:
             return item
     return None
-
+"""
+"""
 def find_byId(db, clazz, id):
     """ Find something by id"""
     dao = Daos.base(db, clazz)
     return dao.getForId(id)
-
+"""
+"""
 def printList2csv(out_file_name, iterableList):
     f = open(out_file_name, 'wb')
     writer = csv.writer(f)#, lineterminator='\n', quoting=csv.QUOTE_NONE, escapechar='', delimiter='\t')
@@ -516,7 +535,8 @@ def printList2csv(out_file_name, iterableList):
         writer.writerow(['\t'.join(lst)])
     #sys.stdout.write("prova")
     f.close()
-
+"""
+"""
 def print2csv(db, clazz, out_file_name, tmplog):
     """ print to csv file """
     # 'C:/Users/Davide Pederzoli/Documents/Python Scripts/outfile.txt'
@@ -540,7 +560,8 @@ def print2csv(db, clazz, out_file_name, tmplog):
         writer.writerow([item.name.encode('utf-8'), item.category, item.refId, locName.encode('utf-8'), locCode, locRefId])
     #sys.stdout.write("prova")
     f.close()
-
+"""
+"""
 def printProcess2csv(db, RefId, out_file_name):
     """ print to csv file """
     #"C:/Users/Davide Pederzoli/Documents/Python Scripts/{0}".format(out_file_name)
@@ -559,7 +580,8 @@ def printProcess2csv(db, RefId, out_file_name):
         fl_unit = item.unit.name
         writer.writerow([fl_name, fl_isInput, fl_unit, fl_amount, fl_amountFormula, fl_RefId])
     f.close()
-
+"""
+"""
 def getJSONfile(file_name):
     #"F:/DOTTORATO UNIGE/PUBBLICAZIONE ARTICOLO/OpenLCA/{0}".format(file_name)
     fin = open(file_name, 'r')
@@ -567,7 +589,8 @@ def getJSONfile(file_name):
     json_string = json_string.replace("True", "true").replace("False", "false")
     data = json.loads(json_string)
     return data
-
+"""
+"""
 def LoadJSONfile(file_name, debugMode = False):
   data = {}
   try:
@@ -582,7 +605,8 @@ def LoadJSONfile(file_name, debugMode = False):
   except OSError as err:
     log_text("OS error: {0}".format(err))
   return data
-
+"""
+"""
 def LoadCategoryFile(file_name):
   with open(file_name, 'r') as csv_in:
     csv_reader = csv_in.readlines()
@@ -592,7 +616,8 @@ def LoadCategoryFile(file_name):
       lst.append(catList)
     csv_in.close()
   return lst
-
+"""
+"""
 def LoadTextFilebyRow(file_name):
   with open(file_name, 'r') as csv_in:
     csv_reader = csv_in.readlines()
@@ -603,19 +628,22 @@ def LoadTextFilebyRow(file_name):
         lst.append(catList)
     csv_in.close()
   return lst
-
+"""
+"""
 def writeJSONfile(file_name, data):
   # https://stackoverflow.com/questions/12309269/how-do-i-write-json-data-to-a-file
   fin = open(file_name, 'w')
   json.dump(data, fin)
   fin.close()
-
+"""
+"""
 def openJSONfile(file_name):
   fin = open(file_name, 'r')
   data = json.load(fin)
   fin.close()
   return data
-
+"""
+"""
 def getParamRedefList(ListArray):
   ProcessRefIdList = list(set([_[0] for _ in ListArray]))
   jsonDict = {}
@@ -624,7 +652,8 @@ def getParamRedefList(ListArray):
     v = [float(_[2]) for _ in ListArray if _[0] == ProcessRefIdLItem]
     jsonDict[ProcessRefIdLItem] = dict(zip(k, v))
   return jsonDict
-
+"""
+"""
 def convert2file(dictionary, fileName):
   # ************************************************************************
   # Task 1. From dict to list of list, e.g. {k : v,...} -> [[k, v], ...]
@@ -641,18 +670,19 @@ def convert2file(dictionary, fileName):
   tmp_dict['paramRedefList'] = json.loads(tmp_dict['paramRedefList']) if tmp_dict['paramRedefList'][0] == '{' and tmp_dict['paramRedefList'][-1] == '}' else tmp_dict['paramRedefList']
   # ************************************************************************
   return tmp_dict
-
+"""
+"""
 def paramRedefList2File(paramRedefList, fileName):
   toList = [[[k, x, y] for x,y in paramRedefList[k].items()] for k in paramRedefList.keys()][0]
   printList2csv(fileName, toList)
-
+"""
+"""
 def getDictionary(fileName):
   # Task 3. Load file
   tmp_list = LoadTextFilebyRow(fileName)
   if tmp_list:
 	  # Task 4. From file to dict
 	  tmp_dict = dict(zip([_[0] for _ in tmp_list], [_[1] for _ in tmp_list]))
-	  #print(tmp_dict)
 	  # Tast 5. Convert string values to typed data
 	  tmp_dict['amount'] = float(tmp_dict['amount'])
 	  # https://stackoverflow.com/questions/45396799/convert-string-to-variable-in-python
@@ -661,18 +691,21 @@ def getDictionary(fileName):
   else:
 	  tmp_dict = {}
   return tmp_dict
-
+"""
+"""
 def find_or_create(db, clazz, name, fn):
     obj = find(db, clazz, name)
     return obj if obj is not None else fn()
-
+"""
+"""
 def add_flow(db, flow_dict):
   name = flow_dict[Flow_dict_CLASS.Name_KEY]
   flow_property = flow_dict[Flow_dict_CLASS.FlowProperty_KEY]
   category = flow_dict[Flow_dict_CLASS.category_KEY]
   flow_type = flow_dict[Flow_dict_CLASS.FlowType_KEY]
   return create_flow_nofind(db, name, flow_property, category, flow_type)
-
+"""
+"""
 def create_flow_nofind(db, name, flow_property, category, flow_type=model.FlowType.PRODUCT_FLOW):
     flow = model.Flow()
     flow.flowType = flow_type
@@ -685,9 +718,9 @@ def create_flow_nofind(db, name, flow_property, category, flow_type=model.FlowTy
     fp_factor.conversionFactor = 1.0
     flow.flowPropertyFactors.add(fp_factor)
     insert(db, flow)
-    #FlowDao(db).insert(flow)
     return flow
-
+"""
+"""
 def create_flow(db, name, flow_property, category, flow_type=model.FlowType.PRODUCT_FLOW):
     flow = find(db, model.Flow, name)
     if flow is not None:
@@ -704,7 +737,8 @@ def create_flow(db, name, flow_property, category, flow_type=model.FlowType.PROD
     flow.flowPropertyFactors.add(fp_factor)
     insert(db, flow)
     return flow
-
+"""
+"""
 def create_exchange(flow, amount=1.0, is_input=False):
     e = model.Exchange()
     e.input = is_input
@@ -713,32 +747,38 @@ def create_exchange(flow, amount=1.0, is_input=False):
     e.amountValue = amount
     e.flowPropertyFactor = flow.getReferenceFactor()
     return e
-
+"""
+"""
 def find_exchange(flow, process):
     for e in process.exchanges:
         if e.flow == flow:
             return e
-
+"""
+"""
 def get_process(pr_dao, ref_id):
   return pr_dao.getForRefId(ref_id)
-
+"""
+"""
 def get_exchange(process, flow_ref_id):
   for exchange in process.exchanges:
     if exchange.flow and exchange.flow.refId == flow_ref_id:
       return exchange
-
+"""
+"""
 def get_parameter(process, parameter_name):
   for parameter in process.parameters:
     if parameter.name == parameter_name:
       return parameter
   return None
-
+"""
+"""
 def create_product_system(db, ref_process, name, target_amount):
-  system = ProductSystem.from(ref_process);
+  system = ProductSystem.from(ref_process)
   system.name = name
   system.targetAmount = target_amount
   return ProductSystemDao(db).insert(system)
-
+"""
+"""
 def auto_link_system(db, system):
   config = LinkingConfig()
   config.preferredType = ProcessType.UNIT_PROCESS
@@ -747,7 +787,8 @@ def auto_link_system(db, system):
   builder = ProductSystemBuilder(cache, config)
   builder.autoComplete(system)
   return builder.saveUpdates(system)
-
+"""
+"""
 def calculate(db, system, impact_method, allocation = AllocationMethod.NONE):
   cache = MatrixCache.createLazy(db)
   setup = CalculationSetup(CalculationType.UPSTREAM_ANALYSIS, system)
@@ -763,7 +804,8 @@ def calculate(db, system, impact_method, allocation = AllocationMethod.NONE):
   result = calculator.calculateFull(setup)
   log_text("calculateFull OK")
   return [setup, result]
-  
+"""
+"""  
 def get_DQS(ProductSystemObj, DQS_Obj, tmpAggregationType = AggregationType.WEIGHTED_AVERAGE, tmpRoundingMode = RoundingMode.CEILING, tmpProcessingType = ProcessingType.EXCLUDE):
   DQSetup = DQCalculationSetup()
   DQSetup.productSystemId = ProductSystemObj.id
@@ -773,15 +815,17 @@ def get_DQS(ProductSystemObj, DQS_Obj, tmpAggregationType = AggregationType.WEIG
   DQSetup.processDqSystem = DQS_Obj
   DQSetup.exchangeDqSystem = DQS_Obj
   return DQSetup
-
+"""
+"""
 def get_category(model_type, path):
   full_path = []
   full_path.append(model_type.name())
   for p in path:
     full_path.append(p)
-  ref_id = KeyGen.get(full_path);
+  ref_id = KeyGen.get(full_path)
   return CategoryDao(Database.get()).getForRefId(ref_id)
-
+"""
+"""
 def add_category(model_type, parent_category, name):
   category = Category()
   category.name = name
@@ -795,8 +839,11 @@ def add_category(model_type, parent_category, name):
   for child in parent_category.childCategories:
     if child.name == name:
       return child
-
+"""
+"""
 def add_category_list(model_type,root_category, category_list):
+  # check if category_list variable is a list, if not it is converted into a list datatype
+  category_list = category_list if type(category_list) == list else [category_list]
   for catItem in category_list:
     tmpLst = []
     i = 0
@@ -819,7 +866,8 @@ def add_category_list(model_type,root_category, category_list):
       else:
         log_text("already exisits, OK")
       i = i + 1
-
+"""
+"""
 def print_class(clsRef):
   # helper functions
   get_class_all_item = lambda x : [a for a in dir(x) if not a.startswith('__')]
@@ -834,14 +882,16 @@ def print_class(clsRef):
     innerClassRef = clsRef.__dict__[innerClass]
     for attr in get_class_attr(innerClassRef):
       log_text("[{0}] Attribute: '{1}' = {2}".format(innerClass, attr, innerClassRef.__dict__[attr]))
-
+"""
+"""
 def find_element_in_list(element, list_element):
     try:
         index_element = list_element.index(element)
         return index_element
     except ValueError:
         return None
-
+"""
+"""
 def create_process_from_template(jsonFileIn, jsonFileOut):
   db = Database.get()
   process_dao = ProcessDao(db)
@@ -1019,7 +1069,6 @@ def create_process_from_template(jsonFileIn, jsonFileOut):
       writeJSONfile(jsonFilePath, process_DICT)
     else:
       log_text("There are no reference Flow in 'Flow_DICT'")
-    #process_DICT[Process_CLASS.Flow_DICT_KEY][][Process_CLASS.Reference_Flow_CLASS.RefId] = proc_output_flow.refId
     # *************************************************************
     # Create exchange Reference flow
     # *************************************************************
@@ -1038,10 +1087,9 @@ def create_process_from_template(jsonFileIn, jsonFileOut):
     Flow_DICT = process_DICT[Process_CLASS.Exchange_DICT_KEY]
     # Loops through the Flow_DICT
     # Selects flows with a not empty dafaultProviderRefId string
-    #Selected_keys = [_ for _ in Flow_DICT if _[Process_CLASS.Exchange_CLASS.defaultProvider][Process_CLASS.DefaultProvider_CLASS.defaultProviderRefId]]
     indexes = [i for i, _ in enumerate(Flow_DICT) if not toBool(_[Process_CLASS.Exchange_CLASS.isQuantitativeReference])]
     log_text("there are {0} flows...".format(len(indexes)) if len(indexes) > 0 else "no flows available...")
-
+    #
     for exchangeIndex in indexes:
       log_text("Exchange flow: '{0}'".format(Flow_DICT[exchangeIndex][Process_CLASS.Exchange_CLASS.flow][Process_CLASS.Flow_CLASS.name]))
       # check is there is a valid refId
@@ -1067,7 +1115,8 @@ def create_process_from_template(jsonFileIn, jsonFileOut):
     log_text("Process: '{0}' already exists. RefId = '{1}'".format(proc_name, process_DICT[Process_CLASS.RefId_KEY]))
     process_ref = process_dao.getForRefId(process_DICT[Process_CLASS.RefId_KEY])
   return process_ref
-
+"""
+"""
 def create_template_from_process(processObj, jsonFileOut):
   db = Database.get()
   process_dao = ProcessDao(db)
@@ -1319,13 +1368,10 @@ def getTotalResult(result, jsonOutFileName):
       # 1. regular expression for string searching
       # 2. the unit has to be equal to "kg CO2 eq"
       log_text("methodItem [{0}], icObj.referenceUnit: [{1}]".format(methodItem, impactCatObj.referenceUnit))
-      #if bool(re.match(Config_CLASS.global_warming_regexp_pattern, impactCategory)) and "kg CO2 eq" in impactCatObj.referenceUnit:
-        #log_text("Impact Category OK: {0}".format(impactCategory.name))
-        # Assigns the refId to the impact category
+      # Assigns the refId to the impact category
       impCat[impactCategory] = ic_refId
       # Assigns the impCat dictionary to the method dictionary of the selected key
       mth[methodItem] = impCat
-    #log_text("Mehod: {0}, impactFactorList len is: {1}".format(methodItem, len(impCat.keys())))
   # **********************************************************************
   # TASK 4
   # selects the methods that satisfy the selection criteria
@@ -1371,7 +1417,8 @@ def getTotalResult(result, jsonOutFileName):
   # TASK 6: Saves the result dictionary to a file
   jsonFilePath = "{0}{1}".format(Config_CLASS.json_path, jsonOutFileName)
   writeJSONfile(jsonFilePath, results_DICT)
-
+"""
+"""
 def getUpstreamTreeData3(fileObj, resultObj, impactCategoryObj, UpStreamNodeObj, level, customLevel, parentAmount = 1.0, indent = 1):
   level = customLevel[UpStreamNodeObj.provider.process.name] if UpStreamNodeObj.provider.process.name in customLevel.keys() else level
   if level > 0:
@@ -1381,7 +1428,8 @@ def getUpstreamTreeData3(fileObj, resultObj, impactCategoryObj, UpStreamNodeObj,
       lst = [itemNodeObj.provider.process.name.encode('utf-8'), str(itemNodeObj.result).encode('utf-8').replace('.',','), str(0.0 if parentAmount == 0.0 else itemNodeObj.result / parentAmount).encode('utf-8').replace('.',',')]
       fileObj.write(indent * "\t" + '\t'.join(lst) + "\n")
       getUpstreamTreeData3(fileObj, resultObj, impactCategoryObj, itemNodeObj, level - 1, customLevel, itemNodeObj.result, indent + 1)
-
+"""
+"""
 def create_process_from_template2(process_DICT):
   db = Database.get()
   process_dao = ProcessDao(db)
@@ -1462,7 +1510,6 @@ def create_process_from_template2(process_DICT):
         }
       }
     }
-
   """
 
   proc_name = process_DICT[Process_CLASS.Name_KEY]
@@ -1552,7 +1599,6 @@ def create_process_from_template2(process_DICT):
       Flow_DICT[QuantitativeReferenceIndex][Process_CLASS.Exchange_CLASS.flow][Process_CLASS.Reference_Flow_CLASS.RefId] = proc_output_flow.refId
     else:
       log_text("There are no reference Flow in 'Flow_DICT'")
-    #process_DICT[Process_CLASS.Flow_DICT_KEY][][Process_CLASS.Reference_Flow_CLASS.RefId] = proc_output_flow.refId
     # *************************************************************
     # Create exchange Reference flow
     # *************************************************************
@@ -1571,10 +1617,9 @@ def create_process_from_template2(process_DICT):
     Flow_DICT = process_DICT[Process_CLASS.Exchange_DICT_KEY]
     # Loops through the Flow_DICT
     # Selects flows with a not empty dafaultProviderRefId string
-    # Selected_keys = [_ for _ in Flow_DICT if _[Process_CLASS.Exchange_CLASS.defaultProvider][Process_CLASS.DefaultProvider_CLASS.defaultProviderRefId]]
     indexes = [i for i, _ in enumerate(Flow_DICT) if not toBool(_[Process_CLASS.Exchange_CLASS.isQuantitativeReference])]
     log_text("there are {0} flows...".format(len(indexes)) if len(indexes) > 0 else "no flows available...")
-
+    #
     for exchangeIndex in indexes:
       log_text("Exchange flow: '{0}'".format(Flow_DICT[exchangeIndex][Process_CLASS.Exchange_CLASS.flow][Process_CLASS.Flow_CLASS.name]))
       # check is there is a valid refId

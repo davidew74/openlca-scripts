@@ -59,10 +59,14 @@ import re
 import imp
 util = imp.load_source('module.name', 'C:/Users/Davide Pederzoli/Documents/Python Scripts/util.py')
 
+"""
 
+"""
 def log_text(text):
   log.info(text)
+"""
 
+"""
 def get_category(model_type, path):
   full_path = []
   full_path.append(model_type.name())
@@ -70,7 +74,9 @@ def get_category(model_type, path):
     full_path.append(p)
   ref_id = KeyGen.get(full_path);
   return category_dao.getForRefId(ref_id)
+"""
 
+"""
 def add_category(model_type, parent_category, name):
   category = Category()
   category.name = name
@@ -84,13 +90,17 @@ def add_category(model_type, parent_category, name):
   for child in parent_category.childCategories:
     if child.name == name:
       return child
+"""
 
+"""
 def create_product_system(ref_process, name, target_amount):
-  system = ProductSystem.from(ref_process);
+  system = ProductSystem.from(ref_process)
   system.name = name
   system.targetAmount = target_amount
   return product_system_dao.insert(system)
+"""
 
+"""
 def auto_link_system(system):
   config = LinkingConfig()
   config.preferredType = ProcessType.UNIT_PROCESS
@@ -98,7 +108,9 @@ def auto_link_system(system):
   builder = ProductSystemBuilder(cache, config)
   builder.autoComplete(system)
   return builder.saveUpdates(system)
+"""
 
+"""
 def calculate(system, impact_method):
   setup = CalculationSetup(CalculationType.UPSTREAM_ANALYSIS, system)
   log_text("setup OK")
@@ -109,11 +121,17 @@ def calculate(system, impact_method):
   result = calculator.calculateFull(setup)
   log_text("calculateFull OK")
   return result
+"""
 
+"""
 def refresh():
   Navigator.refresh()
+"""
 
+"""
 def add_category_list(model_type,root_category, category_list):
+  # check if category_list variable is a list, if not it is converted into a list datatype
+  category_list = category_list if type(category_list) == list else [category_list]
   for catItem in category_list:
     tmpLst = []
     i = 0
@@ -136,7 +154,9 @@ def add_category_list(model_type,root_category, category_list):
       else:
         log_text("already exisits, OK")
       i = i + 1
+"""
 
+"""
 def print_class(clsRef):
   # helper functions
   get_class_all_item = lambda x : [a for a in dir(x) if not a.startswith('__')]

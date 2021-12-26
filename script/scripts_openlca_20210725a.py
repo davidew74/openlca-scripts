@@ -203,7 +203,6 @@ if __name__ == '__main__':
     result = appCache.remove(key)
     setup = appCache.remove(key_setup)
     DQRes = appCache.remove(key_DQS)
-    #SimResult = appCache.remove(key_Sim)
     #
     # check returned value
     if result is None:
