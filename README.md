@@ -16,7 +16,7 @@ def say_hello_world():
 
 if __name__ == '__main__':
     App.runInUI('say hello', say_hello_world)
-  ```
+```
 
 To execute the script, click on the `Run` button in the toolbar of the Python editor:
 
