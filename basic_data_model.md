@@ -16,4 +16,4 @@ process_ref.name = "PROCESS_NAME_STRING"
 
 A collection of related functions makes up a module. In openLCA, we can identify five core modules: `database`, `math`, `matrix`, `model`,  and `result`:
 
-<img src="https://github.com/davidew74/openlca-scripts/blob/main/images/python_model_structure.png" width="750">
+<img src="https://github.com/davidew74/openlca-scripts/blob/main/images/python_model_structure.png" width="750" align="center">
