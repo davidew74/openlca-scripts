@@ -200,7 +200,18 @@ else:
 
 
 ```json
-{"LIB_iron_steel_eol_waste": {"IsInputParameter": "True", "value": 38.63636364, "formula": "", "description": ""}, "LIB_iron_steel_recovery_rate": {"IsInputParameter": "True", "value": 0.95, "formula": "", "description": ""}, "LIB_iron_steel_recycling_rate": {"IsInputParameter": "True", "value": 1.0, "formula": "", "description": ""}, "LIB_iron_steel_to_closed_loop_rate_input": {"IsInputParameter": "True", "value": 0.5, "formula": "", "description": ""},...}
+{"PARAMETER_1": {"IsInputParameter": "True", 
+                    "value": 38.63636364, 
+                    "formula": "", 
+                    "description": ""}, 
+"PARAMETER_2": {"IsInputParameter": "True", 
+                    "value": 0.95, 
+                    "formula": "", 
+                    "description": ""},
+"PARAMETER_3": {"IsInputParameter": "False", 
+                    "value": 0.0, 
+                    "formula": "PARAMETER_1 + PARAMETER_2", 
+                    "description": ""},...}
 ```
 
 ```python
@@ -242,10 +253,6 @@ App.runInUI('Refreshing', refresh)
 
 ## How to save a process as a JSON file
 
-```python
-```
-
-## How to create a process from a JSON file template
 
 ```json
     {
@@ -301,6 +308,167 @@ App.runInUI('Refreshing', refresh)
     }
 
 ```
+
+```python
+def create_template_from_process(processObj, jsonFileOut):
+  db = Database.get()
+  process_dao = ProcessDao(db)
+  Param_dao = ParameterDao(db)
+  location_dao = LocationDao(db)
+  flow_dao = FlowDao(db)
+  fp_dao = FlowPropertyDao(db)
+
+  # mass = util.find(db, model.FlowProperty, 'Mass')
+  mass = fp_dao.getForName('Mass')[0]
+  #items = util.find(db, model.FlowProperty, 'Mass')
+  items = fp_dao.getForName('Number of items')[0]
+  #energy = util.find(db, model.FlowProperty, 'Energy')
+  energy = fp_dao.getForName('Energy')[0]
+  #volume = util.find(db, model.FlowProperty, 'Volume')
+  volume = fp_dao.getForName('Volume')[0]
+  #good_transport = util.find(db, model.FlowProperty, 'Goods transport (mass*distance)')
+  good_transport = fp_dao.getForName('Goods transport (mass*distance)')[0]
+
+  FlowProperty_DICT = {"Mass" : mass, "Items" : items, "Energy" : energy, "Volume" : volume, "Good Transport": good_transport}
+  # ****************************************************************************
+  process_DICT = {}
+  # set empty values in the dictionary and in the Exchange list
+  process_DICT[Process_CLASS.Parameter_DICT_KEY] = {}
+  process_DICT[Process_CLASS.Exchange_DICT_KEY] = []
+  process_DICT[Process_CLASS.Reference_Flow_DICT_KEY] = {}
+  process_DICT[Process_CLASS.Category_Process_KEY] = ""
+  process_DICT[Process_CLASS.RefId_KEY] = ""
+  process_DICT[Process_CLASS.Name_KEY] = ""
+  process_DICT[Process_CLASS.LocationCode_KEY] = ""
+  process_DICT[Process_CLASS.LocationRefId_KEY] = ""
+  # ****************************************************************************
+  FlowTypeObj = FlowType_CLASS()
+  # ****************************************************************************
+  process_category_path = Strings.join(Categories.path(processObj.category), '/')
+  # ****************************************************************************
+  log_text("Processs name: '{0}'".format(processObj.name))
+  log_text("Processs category: '{0}'".format(process_category_path))
+  # ****************************************************************************
+  if processObj.location is None:
+    log_text("Location is empty, adding default 'RER' location code...")
+    RER_RefId = 'd66c264e-1dbd-33e6-911d-3ffc70908e8e'
+    locationRER_Obj = location_dao.getForRefId(RER_RefId)
+    processObj.location = locationRER_Obj
+    process_DICT[Process_CLASS.LocationCode_KEY] = locationRER_Obj.code
+    process_DICT[Process_CLASS.LocationRefId_KEY] = locationRER_Obj.refId
+  else:
+    log_text("Location name: '{0}'".format(processObj.location.name))
+    process_DICT[Process_CLASS.LocationCode_KEY] = processObj.location.code
+    process_DICT[Process_CLASS.LocationRefId_KEY] = processObj.location.refId
+  # ****************************************************************************
+  # STEP 1: PROCESS DEFINITION
+  # ****************************************************************************
+  # Process object attributes
+  process_DICT[Process_CLASS.Name_KEY] = processObj.name
+  process_DICT[Process_CLASS.Category_Process_KEY] = process_category_path
+  process_DICT[Process_CLASS.RefId_KEY] = processObj.refId
+  process_DICT[Process_CLASS.LocationCode_KEY] = processObj.location.code
+  process_DICT[Process_CLASS.LocationRefId_KEY] = processObj.location.refId
+  # ****************************************************************************
+  # STEP 2: REFERENCE PROCESS DEFINITION
+  # ****************************************************************************
+  RefFlowObj = processObj.quantitativeReference
+  log_text("Reference Flow name: '{0}'".format(RefFlowObj.flow.name))
+  log_text("Reference Flow refId: '{0}'".format(RefFlowObj.flow.refId))
+  log_text("Reference Flow category: '{0}'".format(RefFlowObj.flow.category.name))
+  log_text("Reference Flow Property: '{0}'".format(RefFlowObj.flow.referenceFlowProperty.name))
+  # Sets values into the dictionary
+  process_DICT[Process_CLASS.Reference_Flow_DICT_KEY][Process_CLASS.Reference_Flow_CLASS.name] = RefFlowObj.flow.name
+  process_DICT[Process_CLASS.Reference_Flow_DICT_KEY][Process_CLASS.Reference_Flow_CLASS.RefId] = RefFlowObj.flow.refId
+  process_DICT[Process_CLASS.Reference_Flow_DICT_KEY][Process_CLASS.Reference_Flow_CLASS.referenceFlowProperty] = RefFlowObj.flow.referenceFlowProperty.name
+  # ****************************************************************************
+  # STEP 3: EXCHANGE FLOWS DEFINITION
+  # ****************************************************************************
+  exchange_list = processObj.exchanges
+  # loop through the exchange list
+  for exch in exchange_list:
+    Exchange_DICT = {}
+    log_text("Exchange Flow name: '{0}'".format(exch.flow.name))
+    log_text("Category: '{0}'".format(exch.flow.category.name)) #toString()
+    log_text("Exchange [{0}] amount: '{1}'".format(exch.flow.name, exch.amount))
+    log_text("Exchange [{0}] amountFormula: '{1}'".format(exch.flow.name, exch.amountFormula))
+    log_text("Exchange [{0}] Unit: '{1}'".format(exch.flow.name, exch.unit.name))
+    log_text("Exchange [{0}] isInput: '{1}'".format(exch.flow.name, exch.isInput))
+    log_text("Exchange [{0}] refId: '{1}'".format(exch.flow.name, exch.flow.refId))
+    log_text("Exchange [{0}] unitGroup: '{1}'".format(exch.flow.name, exch.flow.referenceFlowProperty.unitGroup.name))
+    log_text("Exchange [{0}] unit name: '{1}'".format(exch.flow.name, exch.flow.referenceFlowProperty.name))
+    log_text("Exchange [{0}] default provider id: '{1}'".format(exch.flow.name, exch.defaultProviderId))
+    log_text("Exchange [{0}] isQuantitativeReference: '{1}'".format(exch.flow.name, "True" if exch.flow.refId == RefFlowObj.flow.refId else "False"))
+    # Sets values into the dictionary
+    # ****************************************************************************
+    # STEP 3.1: SET FLOW OBJECT REFERENCE TO EXCHANGE
+    # ****************************************************************************
+    log_text("Exchange [{0}] flow type: '{1}'".format(exch.flow.name, FlowTypeObj.getFlowTypeName(exch.flow.flowType)))
+    ExchangeFlowObj = Flow_TEMPLATE_CLASS(exch.flow.name,
+    FlowTypeObj.getFlowTypeName(exch.flow.flowType),
+    exch.flow.referenceFlowProperty.name,
+    exch.flow.refId,
+    "" if exch.flow.description is None else exch.flow.description,
+    Strings.join(Categories.path(exch.flow.category), '/'))
+    #****************************************************************************
+    Exchange_DICT[Process_CLASS.Exchange_CLASS.flow] = Obj2dict(ExchangeFlowObj)
+    # ****************************************************************************
+    Exchange_DICT[Process_CLASS.Exchange_CLASS.isInput] = "True" if exch.isInput else "False"
+    Exchange_DICT[Process_CLASS.Exchange_CLASS.FlowProperty] = exch.flow.referenceFlowProperty.name
+    Exchange_DICT[Process_CLASS.Exchange_CLASS.amount] = exch.amount
+    Exchange_DICT[Process_CLASS.Exchange_CLASS.amountFormula] = exch.amountFormula
+    Exchange_DICT[Process_CLASS.Exchange_CLASS.isQuantitativeReference] = "True" if exch.flow.refId == RefFlowObj.flow.refId else "False"
+    # ****************************************************************************
+    # STEP 3.2: SET DEFAULT PROVIDER TO EXCHANGE
+    # ****************************************************************************
+    # defualt provider object reference
+    Exchange_DICT[Process_CLASS.Exchange_CLASS.defaultProvider] = {}
+    # define empty DefaultProvider_DICT
+    DefaultProvider_DICT = {}
+    # get default provider object reference
+    defaultProviderObj = find_byId(db, model.Process, exch.defaultProviderId)
+    if defaultProviderObj is None:
+      log_text("####Exchange [{0}] default provider empty".format(exch.flow.name))
+    else:
+      log_text("####Exchange [{0}] default provider name: '{1}'".format(exch.flow.name, defaultProviderObj.name))
+      log_text("####Exchange [{0}] default provider Location Code: '{1}'".format(exch.flow.name, "" if defaultProviderObj.location is None else defaultProviderObj.location.code))
+    # assign values to DefaultProvider_DICT
+    DefaultProvider_DICT[Process_CLASS.DefaultProvider_CLASS.defaultProviderName] = "" if defaultProviderObj is None else defaultProviderObj.name
+    DefaultProvider_DICT[Process_CLASS.DefaultProvider_CLASS.defaultProviderRefId] = "" if defaultProviderObj is None else defaultProviderObj.refId
+    DefaultProvider_DICT[Process_CLASS.DefaultProvider_CLASS.defaultProviderLocationCode] = "" if defaultProviderObj is None else "" if defaultProviderObj.location is None else defaultProviderObj.location.code
+    DefaultProvider_DICT[Process_CLASS.DefaultProvider_CLASS.defaultProviderLocationRefId] = "" if defaultProviderObj is None else "" if defaultProviderObj.location is None else defaultProviderObj.location.refId
+    # set DefaultProvider_DICT to exchange dictionary
+    Exchange_DICT[Process_CLASS.Exchange_CLASS.defaultProvider] = DefaultProvider_DICT
+    #log_text("There are no default provider for the selected flow")
+    # add the the Exchange_DICT object to the flows list
+    process_DICT[Process_CLASS.Exchange_DICT_KEY].append(Exchange_DICT)
+  # ****************************************************************************
+  # STEP 4: INPUT PARAMETERS DEFINITION
+  # ****************************************************************************
+  param_list = processObj.parameters
+  # loop through the parameter list
+  for pm in param_list:
+    parameter_DICT = {}
+    log_text("parameter name: {0} = {1}, formula = '{2}'".format(pm.name, pm.value, pm.formula))
+    log_text("parameter name: {0}, description = '{1}'".format(pm.name, pm.description))
+    log_text("parameter name: {0}, isInputParameter = {1}".format(pm.name, pm.isInputParameter))
+    # Sets values into the dictionary
+    parameter_DICT[Process_CLASS.Parameter_CLASS.IsInputParameter] = "True" if pm.isInputParameter else "False"
+    parameter_DICT[Process_CLASS.Parameter_CLASS.value] = pm.value
+    parameter_DICT[Process_CLASS.Parameter_CLASS.description] = pm.description
+    parameter_DICT[Process_CLASS.Parameter_CLASS.formula] = pm.formula
+    # set the parameter_DICT to the process_DICT
+    process_DICT[Process_CLASS.Parameter_DICT_KEY][pm.name] = parameter_DICT
+  # ****************************************************************************
+  # STEP 5: SAVE JSON FILE TO DISK
+  # ****************************************************************************
+  jsonFilePath = "{0}{1}".format(Config_CLASS.json_path, jsonFileOut)
+  writeJSONfile(jsonFilePath, process_DICT)
+```
+
+## How to create a process from a JSON file template
+
+
 
 
 ```python
