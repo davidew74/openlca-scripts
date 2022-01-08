@@ -33,12 +33,12 @@ def get_parameter(process, parameter_name):
     for parameter in process.parameters:
         if parameter.name == parameter_name:
             return parameter
-  return None
+    return None
 ```
 If the function returns a non empty object reference, then we can effectively delete the parameters. The task comprises three distinct step. The first is to remove parameter's object from the parameter's list of the process; the second is to delete object reference from parameter's database; and the last is to update the process
 
 ```python
-param_obj = util.get_parameter(processObj, "Prova")
+param_obj = get_parameter(processObj, "Prova")
 # if the function returns a valid object reference
 if param_obj:
     log_text("parameter name: '{0}' found".format(param_obj.name))
@@ -74,10 +74,10 @@ for exch in [_ for _ in processObj.exchanges if _.flow.refId == flowRefId]:
 ## How to delete a process
 
 ```python
-process_dao.getForRefId("55053797-3f28-4930-b48e-9cd75b159e1a")
-  if processObj:
+processObj = process_dao.getForRefId("55053797-3f28-4930-b48e-9cd75b159e1a")
+if processObj:
     process_dao.delete(processObj)
-  else:
-      log_text("process is not in the database")
+else:
+    log_text("process is not in the database")
 ```
 
