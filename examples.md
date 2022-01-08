@@ -91,7 +91,7 @@ def refresh():
   Navigator.refresh()
 ```
 
-### How to 
+### How to load Ecoinvent database and create Data Access Object (DAO) references
 
 ```python
 if __name__ == '__main__':
@@ -196,3 +196,274 @@ else:
     log_text("process is not in the database")
 ```
 
+## How to add parameters according to a defined schema
+
+
+```json
+{"LIB_iron_steel_eol_waste": {"IsInputParameter": "True", "value": 38.63636364, "formula": "", "description": ""}, "LIB_iron_steel_recovery_rate": {"IsInputParameter": "True", "value": 0.95, "formula": "", "description": ""}, "LIB_iron_steel_recycling_rate": {"IsInputParameter": "True", "value": 1.0, "formula": "", "description": ""}, "LIB_iron_steel_to_closed_loop_rate_input": {"IsInputParameter": "True", "value": 0.5, "formula": "", "description": ""},...}
+```
+
+```python
+processList = {"9ea8a1fe-4856-4fae-ae08-f5dbf8493fa4" : ["PARMETERS_FILE_NAME.json",...],...}
+
+
+for processRefId in processList.keys():
+    # get object instance
+    processRefObj = util.get_process(process_dao, processRefId)
+    log_text("processRefObj name = '{0}'".format(processRefObj.name))
+    # loop thorugh the json files
+    for jsonFile in processList[processRefId]:
+      # open parameters file
+      ParamAssocArray = util.openJSONfile("{0}{1}".format(util.Config_CLASS.json_path, jsonFile))
+      # loop through the parameter list
+      for param in ParamAssocArray.keys():
+        log_text("param name = '{0}'".format(param))
+        paramObj = util.get_parameter(processRefObj, param)
+        if paramObj:
+          log_text("update paramter's Value")
+          # update paramter's Value
+          paramObj.value = ParamAssocArray[param]["value"]
+          paramObj.formula = ParamAssocArray[param]["formula"]
+          # update database
+          Param_dao.update(paramObj)
+        else:
+          log_text("create parameter object")
+          # create paramter object
+          paramObj = util.add_parameter(param, ParameterScope.PROCESS, ParamAssocArray[param])
+          # inserts the parameter into the database
+          Param_dao.insert(paramObj)
+          # Add parameter to the process
+          processRefObj.parameters.add(paramObj)
+          # update database
+          process_dao.update(processRefObj)
+
+App.runInUI('Refreshing', refresh)
+```
+
+## How to save a process as a JSON file
+
+```python
+```
+
+## How to create a process from a JSON file template
+
+```json
+    {
+      "name": "PROCESS A",
+      "RefId": "",
+      "Category": "HIGHVLOCity Project/Hydrogen Production",
+      "LocationCode": "RER",
+      "LocationRefId": "d66c264e-1dbd-33e6-911d-3ffc70908e8e",
+      "Exchange_DICT": [
+        {
+          "amount": 1,
+          "isInput": "False",
+          "amountFormula": "functional_unit_amount",
+          "defaultProvider": {
+            "defaultProviderLocationRefId": "",
+            "defaultProviderLocationCode": "",
+            "defaultProviderName": "",
+            "defaultProviderRefId": ""
+          },
+          "FlowProperty": "Mass",
+          "flow": {
+            "description": "",
+            "flowtype": "FlowType_PRODUCT_FLOW",
+            "name": "FLOW A",
+            "referenceFlowProperty": "Mass",
+            "refId": "",
+            "category": ""
+          },
+          "isQuantitativeReference": "True"
+        }
+      ],
+      "Reference_Flow_DICT": {
+        "name": "FLOW A",
+        "ReferenceFlowProperty": "Mass",
+        "refId": ""
+      },
+      "Input_Parameter_DICT": {
+        "functional_unit_input": {
+          "IsInputParameter": "True",
+          "description": "",
+          "name": "functional_unit_input",
+          "formula": "",
+          "value": 1
+        },
+        "functional_unit_amount": {
+          "IsInputParameter": "False",
+          "description": "",
+          "name": "functional_unit_amount",
+          "formula": "functional_unit_input",
+          "value": 1
+        }
+      }
+    }
+
+```
+
+
+```python
+def create_process_from_template2(process_DICT):
+  db = Database.get()
+  process_dao = ProcessDao(db)
+  Param_dao = ParameterDao(db)
+  location_dao = LocationDao(db)
+  flow_dao = FlowDao(db)
+  fp_dao = FlowPropertyDao(db)
+
+  # mass = util.find(db, model.FlowProperty, 'Mass')
+  mass = fp_dao.getForName('Mass')[0]
+  #items = util.find(db, model.FlowProperty, 'Mass')
+  items = fp_dao.getForName('Number of items')[0]
+  #energy = util.find(db, model.FlowProperty, 'Energy')
+  energy = fp_dao.getForName('Energy')[0]
+  #volume = util.find(db, model.FlowProperty, 'Volume')
+  volume = fp_dao.getForName('Volume')[0]
+  #good_transport = util.find(db, model.FlowProperty, 'Goods transport (mass*distance)')
+  good_transport = fp_dao.getForName('Goods transport (mass*distance)')[0]
+  #area = util.find(db, model.FlowProperty, 'Area')
+  area = fp_dao.getForName('Area')[0]
+  #length = util.find(db, model.FlowProperty, 'Length')
+  length = fp_dao.getForName('Length')[0]
+  #volume = util.find(db, model.FlowProperty, 'Volume')
+  volume = fp_dao.getForName('Volume')[0]
+
+  FlowProperty_DICT = {"Mass" : mass, "Items" : items, "Energy" : energy, "Volume" : volume, "Good Transport": good_transport, "Area" : area, "Length" : length, "Volume" : volume}
+
+  proc_name = process_DICT[Process_CLASS.Name_KEY]
+  log_text("Process: '{0}'".format(proc_name))
+  # *************************************************************
+  # Add Process
+  # *************************************************************
+  # First of all checks if the process name is in the database
+  if not process_DICT[Process_CLASS.RefId_KEY]:
+    process_ref = model.Process()
+    # Sets the process name
+    process_ref.name = proc_name
+    # *************************************************************
+    # Gets category ref
+    # *************************************************************
+    # Builds the category list
+    process_category_path = process_DICT[Process_CLASS.Category_Process_KEY].split("/")
+    parent_process_category = get_category(ModelType.PROCESS, process_category_path)
+    # check if the category path exist, otherwise it creates it for PROCESS and FLOW
+    if parent_process_category is None:
+      add_category_list(ModelType_CLASS.ModelType_DICT[ModelType_CLASS.ModelType_PROCESS], ModelType_CLASS.ModelType_ROOT_ELEMENT_DICT[ModelType_CLASS.ModelType_PROCESS], [process_category_path])
+      add_category_list(ModelType_CLASS.ModelType_DICT[ModelType_CLASS.ModelType_FLOW], ModelType_CLASS.ModelType_ROOT_ELEMENT_DICT[ModelType_CLASS.ModelType_FLOW], [process_category_path])
+      parent_process_category = get_category(ModelType.PROCESS, process_category_path)
+    # Sets the parent category
+    process_ref.category = parent_process_category
+    # Sets the universally unique identifier (UUID) to the process
+    process_ref.refId = UUID.randomUUID().toString()
+    # get location RefId
+    locationObj = location_dao.getForRefId(process_DICT[Process_CLASS.LocationRefId_KEY])
+    process_ref.location = locationObj
+    # update process refId
+    process_DICT[Process_CLASS.RefId_KEY] = process_ref.refId
+    # Inserts the process into the database
+    insert(db, process_ref)
+    # *************************************************************
+    # Add paramenters
+    # *************************************************************
+    log_text("Add paramenters")
+    Input_Parameter_DICT = process_DICT[Process_CLASS.Parameter_DICT_KEY]
+    # loops through the parameters dictionary
+    for paramItem in Input_Parameter_DICT.keys():
+      log_text("Parameter Name: '{0}'".format(paramItem))
+      # Gets the paraments reference
+      param = add_parameter(paramItem, ParameterScope.PROCESS, Input_Parameter_DICT[paramItem])
+      # Inserts the parameter into the database
+      Param_dao.insert(param)
+      # Add parameter to the process
+      process_ref.parameters.add(param)
+    # *************************************************************
+    # Add Reference flow
+    # *************************************************************
+    # gets the parent category
+    # The refernce flow category must be the same as the process one
+    parent_flow_category = get_category(ModelType.FLOW, process_category_path)
+    #**************************************************************
+    log_text("checks if the object reference is valid")
+    # checks if the object reference is valid
+    log_text("add Reference flow")
+    # creates the reference flow from using the data stored in the "Reference_Flow_DICT"
+    if process_DICT[Process_CLASS.Reference_Flow_DICT_KEY][Process_CLASS.Reference_Flow_CLASS.RefId]:
+      log_text("get Reference flow from existing RefId")
+      proc_output_flow = flow_dao.getForRefId(process_DICT[Process_CLASS.Reference_Flow_DICT_KEY][Process_CLASS.Reference_Flow_CLASS.RefId])
+    else:
+      log_text("Create a new Reference flow")
+      tmpFlow_DICT = {}
+      tmpFlow_DICT[Flow_dict_CLASS.Name_KEY] = process_DICT[Process_CLASS.Reference_Flow_DICT_KEY][Process_CLASS.Reference_Flow_CLASS.name]
+      tmpFlow_DICT[Flow_dict_CLASS.FlowProperty_KEY] = FlowProperty_DICT[process_DICT[Process_CLASS.Reference_Flow_DICT_KEY][Process_CLASS.Reference_Flow_CLASS.referenceFlowProperty]]
+      tmpFlow_DICT[Flow_dict_CLASS.category_KEY] = parent_flow_category
+      # A Reference Flow must be PRODUCT FLOW type
+      tmpFlow_DICT[Flow_dict_CLASS.FlowType_KEY] = FlowType_CLASS.FlowType_DICT[FlowType_CLASS.FlowType_PRODUCT_FLOW]
+      proc_output_flow = add_flow(db, tmpFlow_DICT)
+    #**************************************************************
+    log_text("Reference flow RefId: '{0}'".format(proc_output_flow.refId))
+    # *************************************************************
+    # Update reference Flow RefId
+    # *************************************************************
+    log_text("Update reference Flow RefId in 'Reference_Flow_DICT'")
+    process_DICT[Process_CLASS.Reference_Flow_DICT_KEY][Process_CLASS.Reference_Flow_CLASS.RefId] = proc_output_flow.refId
+    # look for quantitativeReference flow.
+    Flow_DICT = process_DICT[Process_CLASS.Exchange_DICT_KEY]
+    indexes = [i for i, _ in enumerate(Flow_DICT) if toBool(_[Process_CLASS.Flow_CLASS.isQuantitativeReference])]
+    if len(indexes) > 0:
+      log_text("Update reference Flow RefId in 'Flow_DICT'")
+      # Get the reference flow name
+      QuantitativeReferenceIndex = indexes[0]
+      # Update reference Flow RefId
+      Flow_DICT[QuantitativeReferenceIndex][Process_CLASS.Exchange_CLASS.flow][Process_CLASS.Reference_Flow_CLASS.RefId] = proc_output_flow.refId
+    else:
+      log_text("There are no reference Flow in 'Flow_DICT'")
+    #process_DICT[Process_CLASS.Flow_DICT_KEY][][Process_CLASS.Reference_Flow_CLASS.RefId] = proc_output_flow.refId
+    # *************************************************************
+    # Create exchange Reference flow
+    # *************************************************************
+    log_text("add Exchange Reference flow")
+    # Gets the exchange reference from the reference flow previously created
+    proc_exchange = add_exchange(proc_output_flow, Flow_DICT[QuantitativeReferenceIndex])
+    # Add reference flow to the process exchange
+    process_ref.exchanges.add(proc_exchange)
+    # Set the procress quantitativeReference
+    process_ref.quantitativeReference = proc_exchange
+    # *************************************************************
+    # Adds input and emissions exchanges
+    # *************************************************************
+    log_text("add Exchange flows")
+    # Gets the "FLOW_DICT" dictionary
+    Flow_DICT = process_DICT[Process_CLASS.Exchange_DICT_KEY]
+    # Loops through the Flow_DICT
+    # Selects flows with a not empty dafaultProviderRefId string
+    # Selected_keys = [_ for _ in Flow_DICT if _[Process_CLASS.Exchange_CLASS.defaultProvider][Process_CLASS.DefaultProvider_CLASS.defaultProviderRefId]]
+    indexes = [i for i, _ in enumerate(Flow_DICT) if not toBool(_[Process_CLASS.Exchange_CLASS.isQuantitativeReference])]
+    log_text("there are {0} flows...".format(len(indexes)) if len(indexes) > 0 else "no flows available...")
+
+    for exchangeIndex in indexes:
+      log_text("Exchange flow: '{0}'".format(Flow_DICT[exchangeIndex][Process_CLASS.Exchange_CLASS.flow][Process_CLASS.Flow_CLASS.name]))
+      # check is there is a valid refId
+      if Flow_DICT[exchangeIndex][Process_CLASS.Exchange_CLASS.flow][Process_CLASS.Flow_CLASS.refId]:
+        # Gets the the flow reference
+        flow_ref = find_byRefId(db, model.Flow, Flow_DICT[exchangeIndex][Process_CLASS.Exchange_CLASS.flow][Process_CLASS.Flow_CLASS.refId])
+        # Adds the exchange flow with the associated flow dictiorary with attributes
+        proc_exchange = add_exchange(flow_ref, Flow_DICT[exchangeIndex])
+        # check is there is a valid defaultProviderRefId
+        if Flow_DICT[exchangeIndex][Process_CLASS.Exchange_CLASS.defaultProvider][Process_CLASS.DefaultProvider_CLASS.defaultProviderRefId]:
+          # get dafault provider reference
+          defaultProviderRef = process_dao.getForRefId(Flow_DICT[exchangeIndex][Process_CLASS.Exchange_CLASS.defaultProvider][Process_CLASS.DefaultProvider_CLASS.defaultProviderRefId])
+          log_text("defaultProviderId: {0}".format(str(defaultProviderRef.id)))
+          # Sets the default provider Id to the selected exchange
+          proc_exchange.defaultProviderId = defaultProviderRef.id
+        # Adds exchange flow to the process
+        process_ref.exchanges.add(proc_exchange)
+    # *************************************************************
+    # update database
+    # *************************************************************
+    process_dao.update(process_ref)
+  else:
+    log_text("Process: '{0}' already exists. RefId = '{1}'".format(proc_name, process_DICT[Process_CLASS.RefId_KEY]))
+    process_ref = process_dao.getForRefId(process_DICT[Process_CLASS.RefId_KEY])
+  return process_ref
+```
